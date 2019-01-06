@@ -4,6 +4,19 @@ from interactive_predict import InteractivePredictor
 from model import Model
 import sys
 
+
+def load():
+    class Args():
+        load_path = ''
+        data_path = ''
+        test_path = ''
+        save_path = ''
+        release = ''
+    args = Args()
+    args.load_path = 'models/java14_model/saved_model_iter8.release'
+    config = Config.get_default_config(args)
+    return Model(config)
+
 if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument("-d", "--data", dest="data_path",

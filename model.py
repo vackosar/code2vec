@@ -375,6 +375,37 @@ class Model:
             results.append((original_names[0], top_words[0], top_scores[0], attention_per_path))
         return results
 
+    def predict_words_only(self, predict_data_lines):
+        if self.predict_queue is None:
+            self.predict_queue = PathContextReader.PathContextReader(word_to_index=self.word_to_index,
+                                                                     path_to_index=self.path_to_index,
+                                                                     target_word_to_index=self.target_word_to_index,
+                                                                     config=self.config, is_evaluating=True)
+            self.predict_placeholder = self.predict_queue.get_input_placeholder()
+            self.predict_top_words_op, self.predict_top_values_op, self.predict_original_names_op, \
+            self.attention_weights_op, self.predict_source_string, self.predict_path_string, self.predict_path_target_string = \
+                self.build_test_graph(self.predict_queue.get_filtered_batches(), normalize_scores=True)
+
+            self.initialize_session_variables(self.sess)
+            self.saver = tf.train.Saver()
+            self.load_model(self.sess)
+
+        results = []
+        for batch in common.split_to_batches(predict_data_lines, 1):
+            top_words, top_scores, original_names, attention_weights, source_strings, path_strings, target_strings = self.sess.run(
+                [self.predict_top_words_op, self.predict_top_values_op, self.predict_original_names_op,
+                 self.attention_weights_op, self.predict_source_string, self.predict_path_string,
+                 self.predict_path_target_string],
+                feed_dict={self.predict_placeholder: batch})
+            top_words, original_names = common.binary_to_string_matrix(top_words), common.binary_to_string_matrix(
+                original_names)
+            # Flatten original names from [[]] to []
+            attention_per_path = self.get_attention_per_path(source_strings, path_strings, target_strings,
+                                                             attention_weights)
+            original_names = [w for l in original_names for w in l]
+            results.append(top_words[0])
+        return results
+
     def get_attention_per_path(self, source_strings, path_strings, target_strings, attention_weights):
         attention_weights = np.squeeze(attention_weights)  # (max_contexts, )
         attention_per_context = {}
