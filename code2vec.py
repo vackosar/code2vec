@@ -15,7 +15,8 @@ def load():
     args = Args()
     args.load_path = 'models/java14_model/saved_model_iter8.release'
     config = Config.get_default_config(args)
-    return Model(config)
+    model = Model(config)
+    return InteractivePredictor(config, model)
 
 if __name__ == '__main__':
     parser = ArgumentParser()

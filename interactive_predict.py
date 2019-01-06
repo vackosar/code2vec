@@ -25,6 +25,11 @@ class InteractivePredictor:
         with open(input_filename, 'r') as file:
             return file.readlines()
 
+    def raw_predict(self):
+        input_filename = 'Input.java'
+        predict_lines, hash_to_string_dict = self.path_extractor.extract_paths(input_filename)
+        print(self.model.predict_words_only(predict_lines))
+
     def predict(self):
         input_filename = 'Input.java'
         print('Starting interactive prediction...')
